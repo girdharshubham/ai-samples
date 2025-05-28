@@ -12,10 +12,10 @@ import java.util.Optional;
 
 @Component
 public class KubernetesClientConfiguration {
-    private final String kubeConfigPath = System.getProperty("user.home") + "/.kube/config";
     private final KubeConfig config;
 
     public KubernetesClientConfiguration() throws FileNotFoundException {
+        String kubeConfigPath = System.getProperty("user.home") + "/.kube/config";
         config = KubeConfig.loadKubeConfig(new FileReader(kubeConfigPath));
     }
 
