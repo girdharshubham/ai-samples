@@ -1,7 +1,6 @@
 package io.girdharshubham.sre.companion;
 
 import io.girdharshubham.sre.companion.service.Pods;
-import io.girdharshubham.sre.companion.service.KubeConfig;
 import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
@@ -19,9 +18,9 @@ public class SreCompanionApplication {
     }
 
     @Bean
-    public ToolCallbackProvider tools(Pods getPods, KubeConfig kubeConfig) {
+    public ToolCallbackProvider tools(Pods pods) {
         List<ToolCallback> tools = List.of(
-                ToolCallbacks.from(getPods, kubeConfig)
+                ToolCallbacks.from(pods)
         );
         return ToolCallbackProvider.from(tools);
     }

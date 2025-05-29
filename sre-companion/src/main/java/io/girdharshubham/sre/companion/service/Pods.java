@@ -1,40 +1,42 @@
 package io.girdharshubham.sre.companion.service;
 
 import io.girdharshubham.sre.companion.configuration.KubernetesClientConfiguration;
+import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class Pods {
-    private static final Logger logger = LoggerFactory.getLogger(Pods.class);
-    private final KubernetesClientConfiguration config;
+    private final KubernetesClientConfiguration configuration;
 
-    public Pods(KubernetesClientConfiguration config) {
-        this.config = config;
+    public Pods(KubernetesClientConfiguration configuration) {
+        this.configuration = configuration;
     }
 
-    @Tool(description = "Get all pods for a kubernetes context")
-    public String getPodNames(String context, String namespace) {
-        try {
-            var client = config.getApiClient(Optional.ofNullable(context));
-            var v1 = new CoreV1Api(client);
-            var pods = v1.listNamespacedPod(namespace);
+    @Tool(description = "Get the list of pods in the kubernetes cluster")
+    public String getPods(
+            @ToolParam(description = "The Kubernetes context to use") String context,
+            @ToolParam(description = "The Kubernetes namespace to use") String namespace,
+            @ToolParam(description = "The label selector to filter pods by") String labelSelector
+    ) throws IOException, ApiException {
+        ApiClient client = configuration.getApiClient(Optional.ofNullable(context));
+        CoreV1Api v1 = new CoreV1Api(client);
 
-            return pods.execute()
-                    .getItems()
-                    .stream()
-                    .map(x -> x.getMetadata().getName())
-                    .collect(Collectors.joining(", "));
-        } catch (Exception e) {
-            logger.error("Error fetching pods: {}", e.getMessage());
-            return "Error fetching pods: " + e.getMessage();
-        }
+        return v1
+                .listNamespacedPod(namespace)
+                .labelSelector(labelSelector)
+                .execute()
+                .getItems()
+                .stream()
+                .map(pod -> Objects.requireNonNull(pod.getMetadata()).getName())
+                .reduce((acc, name) -> acc + ", " + name)
+                .orElse("No pods found");
     }
 }
-
