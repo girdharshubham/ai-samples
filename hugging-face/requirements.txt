@@ -1,0 +1,6 @@
+transformers
+tensorflow
+torch
+keras
+huggingface_hub
+tf-keras
